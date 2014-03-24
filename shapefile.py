@@ -419,7 +419,13 @@ class Reader:
         headerLength = self.__dbfHeaderLength()
         numFields = (headerLength - 33) // 32
         for field in range(numFields):
-            fieldDesc = list(unpack("<11sc4xBB14x", dbf.read(32)))
+            read_seg = dbf.read(32)
+            
+            if len(read_seg) == 32:
+                fieldDesc = list(unpack("<11sc4xBB14x", read_seg))
+            else:
+                break
+
             name = 0
             idx = 0
             if b("\x00") in fieldDesc[name]:
@@ -432,7 +438,8 @@ class Reader:
             fieldDesc[1] = u(fieldDesc[1])
             self.fields.append(fieldDesc)
         terminator = dbf.read(1)
-        assert terminator == b("\r")
+        if len(terminator):
+            assert terminator == b("\r")
         self.fields.insert(0, ('DeletionFlag', 'C', 1, 0))
 
     def __recordFmt(self):
